@@ -59,6 +59,9 @@ export const FALLBACK_ASSETS = {
 
 export const RELEASE_DATE_ISO = "2026-12-31";
 export const WHEEL_PRIZE_LABEL = "NEWCOMER game key";
+export const NO_WINNER_LABEL = "[NO WINNER]";
+export const NO_WINNER_PRIZE_LABEL = "No prize awarded";
+export const NO_WINNER_ENTRY_COUNT = 10;
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   overview:

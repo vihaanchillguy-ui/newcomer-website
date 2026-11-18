@@ -19,6 +19,9 @@ import {
   EMPTY_PRODUCTS,
   MediaItem,
   NewsItem,
+  NO_WINNER_ENTRY_COUNT,
+  NO_WINNER_LABEL,
+  NO_WINNER_PRIZE_LABEL,
   Product,
   RELEASE_DATE_ISO,
   WHEEL_PRIZE_LABEL,
@@ -266,6 +269,13 @@ function melbourneDate() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Melbourne" }).format(new Date());
 }
 
+async function ensureNoWinnerEntries(db: Awaited<ReturnType<typeof getDb>> extends infer T ? NonNullable<T> : never, today: string) {
+  const existing = await db.select({ userId: wheelEntries.userId }).from(wheelEntries).where(and(eq(wheelEntries.entryDate, today), eq(wheelEntries.displayName, NO_WINNER_LABEL)));
+  const existingIds = new Set(existing.map(entry => entry.userId));
+  const missing = Array.from({ length: NO_WINNER_ENTRY_COUNT }, (_, index) => -(index + 1)).filter(userId => !existingIds.has(userId));
+  if (missing.length) await db.insert(wheelEntries).values(missing.map(userId => ({ userId, entryDate: today, displayName: NO_WINNER_LABEL })));
+}
+
 export async function getWheelState(userId?: number) {
   const today = melbourneDate();
   const db = await getDb();
@@ -297,6 +307,7 @@ export async function getAdminWheelData() {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   const today = melbourneDate();
+  if (today <= RELEASE_DATE_ISO) await ensureNoWinnerEntries(db, today);
   const [entries, winners] = await Promise.all([
     db.select().from(wheelEntries).where(eq(wheelEntries.entryDate, today)).orderBy(asc(wheelEntries.createdAt)),
     db.select().from(wheelWinners).orderBy(desc(wheelWinners.createdAt)),
@@ -309,14 +320,16 @@ export async function spinDailyWheel() {
   if (!db) throw new Error("Database is not available");
   const today = melbourneDate();
   if (today > RELEASE_DATE_ISO) throw new Error("The daily wheel has closed.");
+  await ensureNoWinnerEntries(db, today);
   const existingWinner = await db.select().from(wheelWinners).where(eq(wheelWinners.winnerDate, today)).limit(1);
   if (existingWinner.length) throw new Error("Today’s wheel has already been spun.");
   const entries = await db.select().from(wheelEntries).where(eq(wheelEntries.entryDate, today));
   if (!entries.length) throw new Error("There are no eligible entries today.");
   const winner = entries[Math.floor(Math.random() * entries.length)];
-  await db.insert(wheelWinners).values({ userId: winner.userId, winnerDate: today, displayName: winner.displayName, prize: WHEEL_PRIZE_LABEL });
+  const noWinner = winner.displayName === NO_WINNER_LABEL;
+  await db.insert(wheelWinners).values({ userId: noWinner ? 0 : winner.userId, winnerDate: today, displayName: winner.displayName, prize: noWinner ? NO_WINNER_PRIZE_LABEL : WHEEL_PRIZE_LABEL, fulfilled: noWinner ? 1 : 0, fulfilledAt: noWinner ? new Date() : null });
   await db.delete(wheelEntries).where(eq(wheelEntries.id, winner.id));
-  return { ...winner, winnerDate: today, prize: WHEEL_PRIZE_LABEL };
+  return { ...winner, winnerDate: today, prize: noWinner ? NO_WINNER_PRIZE_LABEL : WHEEL_PRIZE_LABEL };
 }
 
 export async function markWheelWinnerFulfilled(id: number, fulfilled: boolean) {
