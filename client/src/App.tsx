@@ -16,6 +16,7 @@ function Router() {
       <Route path="/updates/:id" component={Home} />
       <Route path="/release" component={Home} />
       <Route path="/store" component={Home} />
+      <Route path="/wheel" component={Home} />
       <Route path="/community" component={Home} />
       <Route path="/contact" component={Home} />
       <Route path="/admin" component={Home} />

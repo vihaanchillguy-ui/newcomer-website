@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -72,6 +72,27 @@ export const announcementSubscribers = mysqlTable("announcementSubscribers", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const wheelEntries = mysqlTable("wheelEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  entryDate: varchar("entryDate", { length: 10 }).notNull(),
+  displayName: varchar("displayName", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({
+  userDailyEntry: uniqueIndex("wheelEntries_user_date_idx").on(table.userId, table.entryDate),
+}));
+
+export const wheelWinners = mysqlTable("wheelWinners", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  winnerDate: varchar("winnerDate", { length: 10 }).notNull().unique(),
+  displayName: varchar("displayName", { length: 120 }).notNull(),
+  prize: varchar("prize", { length: 160 }).notNull().default("NEWCOMER game key"),
+  fulfilled: int("fulfilled").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  fulfilledAt: timestamp("fulfilledAt"),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type GalleryItem = typeof galleryItems.$inferSelect;
@@ -79,3 +100,5 @@ export type NewsItem = typeof newsItems.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type SupportMessage = typeof supportMessages.$inferSelect;
 export type AnnouncementSubscriber = typeof announcementSubscribers.$inferSelect;
+export type WheelEntry = typeof wheelEntries.$inferSelect;
+export type WheelWinner = typeof wheelWinners.$inferSelect;

@@ -57,6 +57,9 @@ export const FALLBACK_ASSETS = {
   coast: "/manus-storage/async-images/iftyHbM2vq0FfDRO9ux4Pb/image-5.webp",
 } as const;
 
+export const RELEASE_DATE_ISO = "2026-12-31";
+export const WHEEL_PRIZE_LABEL = "NEWCOMER game key";
+
 export const DEFAULT_SETTINGS: SiteSettings = {
   overview:
     "NEWCOMER is an upcoming realistic open-world game inspired by Melbourne, Australia. Official game details will be published here as development progresses.",

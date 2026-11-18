@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, subscribeToAnnouncements } from "./db";
-import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { createWheelEntry, getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
 import { sendAnnouncementEmail, sendSubscriberWelcome } from "./email";
 
@@ -76,8 +76,16 @@ export const appRouter = router({
         return { success: true, emailSent };
       }),
   }),
+  wheel: router({
+    state: publicProcedure.query(({ ctx }) => getWheelState(ctx.user?.id)),
+    enter: protectedProcedure
+      .input(z.object({ displayName: z.string().trim().min(2).max(120) }))
+      .mutation(({ ctx, input }) => createWheelEntry(ctx.user.id, input.displayName)),
+  }),
   admin: router({
     data: adminProcedure.query(() => getAdminData()),
+    spinWheel: adminProcedure.mutation(() => spinDailyWheel()),
+    markWinnerFulfilled: adminProcedure.input(z.object({ id: z.number(), fulfilled: z.boolean() })).mutation(({ input }) => markWheelWinnerFulfilled(input.id, input.fulfilled).then(() => ({ success: true }))),
     saveSettings: adminProcedure.input(settingsSchema).mutation(({ input }) => saveSettings(input).then(() => ({ success: true }))),
     saveGallery: adminProcedure.input(mediaSchema).mutation(({ input }) => saveGalleryItem(input).then(() => ({ success: true }))),
     deleteGallery: adminProcedure.input(z.object({ id: z.number() })).mutation(({ input }) => deleteGalleryItem(input.id).then(() => ({ success: true }))),

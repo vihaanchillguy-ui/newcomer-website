@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   galleryItems,
@@ -8,6 +8,8 @@ import {
   siteContent,
   supportMessages,
   announcementSubscribers,
+  wheelEntries,
+  wheelWinners,
   users,
 } from "../drizzle/schema";
 import {
@@ -18,6 +20,8 @@ import {
   MediaItem,
   NewsItem,
   Product,
+  RELEASE_DATE_ISO,
+  WHEEL_PRIZE_LABEL,
   SiteData,
   SiteSettings,
 } from "@shared/content";
@@ -149,19 +153,20 @@ export async function getSiteData(): Promise<SiteData> {
 export async function getAdminData() {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  const [settingsRows, gallery, news, productRows, messages, subscribers] = await Promise.all([
+  const [settingsRows, gallery, news, productRows, messages, subscribers, wheel] = await Promise.all([
     db.select().from(siteContent),
     db.select().from(galleryItems).orderBy(asc(galleryItems.sortOrder)),
     db.select().from(newsItems).orderBy(desc(newsItems.createdAt)),
     db.select().from(products).orderBy(desc(products.createdAt)),
     db.select().from(supportMessages).orderBy(desc(supportMessages.createdAt)),
     getAnnouncementSubscribers(),
+    getAdminWheelData(),
   ]);
   const settings = { ...DEFAULT_SETTINGS };
   for (const row of settingsRows) {
     if (row.contentKey in settings) (settings as Record<string, string>)[row.contentKey] = row.value;
   }
-  return { settings, gallery, news, products: productRows, messages, subscribers };
+  return { settings, gallery, news, products: productRows, messages, subscribers, wheel };
 }
 
 export async function saveSettings(settings: SiteSettings) {
@@ -255,4 +260,67 @@ export async function getAnnouncementSubscribers() {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   return db.select().from(announcementSubscribers).orderBy(desc(announcementSubscribers.createdAt));
+}
+
+function melbourneDate() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Melbourne" }).format(new Date());
+}
+
+export async function getWheelState(userId?: number) {
+  const today = melbourneDate();
+  const db = await getDb();
+  if (!db) return { today, releaseDate: RELEASE_DATE_ISO, isOpen: today <= RELEASE_DATE_ISO, hasEntered: false, entryName: null };
+  const entry = userId
+    ? await db.select({ displayName: wheelEntries.displayName }).from(wheelEntries).where(and(eq(wheelEntries.userId, userId), eq(wheelEntries.entryDate, today))).limit(1)
+    : [];
+  return {
+    today,
+    releaseDate: RELEASE_DATE_ISO,
+    isOpen: today <= RELEASE_DATE_ISO,
+    hasEntered: entry.length > 0,
+    entryName: entry[0]?.displayName ?? null,
+  };
+}
+
+export async function createWheelEntry(userId: number, displayName: string) {
+  const today = melbourneDate();
+  if (today > RELEASE_DATE_ISO) throw new Error("The daily wheel has closed.");
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const existing = await db.select({ id: wheelEntries.id }).from(wheelEntries).where(and(eq(wheelEntries.userId, userId), eq(wheelEntries.entryDate, today))).limit(1);
+  if (existing.length) return { created: false, date: today };
+  await db.insert(wheelEntries).values({ userId, entryDate: today, displayName });
+  return { created: true, date: today };
+}
+
+export async function getAdminWheelData() {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const today = melbourneDate();
+  const [entries, winners] = await Promise.all([
+    db.select().from(wheelEntries).where(eq(wheelEntries.entryDate, today)).orderBy(asc(wheelEntries.createdAt)),
+    db.select().from(wheelWinners).orderBy(desc(wheelWinners.createdAt)),
+  ]);
+  return { today, releaseDate: RELEASE_DATE_ISO, entries, winners };
+}
+
+export async function spinDailyWheel() {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const today = melbourneDate();
+  if (today > RELEASE_DATE_ISO) throw new Error("The daily wheel has closed.");
+  const existingWinner = await db.select().from(wheelWinners).where(eq(wheelWinners.winnerDate, today)).limit(1);
+  if (existingWinner.length) throw new Error("Today’s wheel has already been spun.");
+  const entries = await db.select().from(wheelEntries).where(eq(wheelEntries.entryDate, today));
+  if (!entries.length) throw new Error("There are no eligible entries today.");
+  const winner = entries[Math.floor(Math.random() * entries.length)];
+  await db.insert(wheelWinners).values({ userId: winner.userId, winnerDate: today, displayName: winner.displayName, prize: WHEEL_PRIZE_LABEL });
+  await db.delete(wheelEntries).where(eq(wheelEntries.id, winner.id));
+  return { ...winner, winnerDate: today, prize: WHEEL_PRIZE_LABEL };
+}
+
+export async function markWheelWinnerFulfilled(id: number, fulfilled: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(wheelWinners).set({ fulfilled: fulfilled ? 1 : 0, fulfilledAt: fulfilled ? new Date() : null }).where(eq(wheelWinners.id, id));
 }
