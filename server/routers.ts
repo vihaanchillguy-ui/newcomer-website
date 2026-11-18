@@ -1,28 +1,81 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
+import { z } from "zod";
+import { getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, saveGalleryItem, saveNewsItem, saveProduct, saveSettings } from "./db";
+import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+
+const mediaSchema = z.object({
+  id: z.number().optional(),
+  title: z.string().min(1).max(160),
+  description: z.string().max(500),
+  imageUrl: z.string().url(),
+  mediaType: z.enum(["image", "video"]),
+  published: z.boolean(),
+  sortOrder: z.number().int().min(0).max(999),
+});
+
+const newsSchema = z.object({
+  id: z.number().optional(),
+  title: z.string().min(1).max(180),
+  excerpt: z.string().max(500),
+  body: z.string().max(10000),
+  imageUrl: z.string().url(),
+  published: z.boolean(),
+  publishedAt: z.string().nullable().optional(),
+});
+
+const productSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(1).max(160),
+  description: z.string().max(500),
+  price: z.string().max(32),
+  currency: z.string().max(8),
+  platform: z.string().max(120),
+  availability: z.string().max(120),
+  published: z.boolean(),
+});
+
+const settingsSchema = z.object({
+  overview: z.string().max(2000),
+  releaseStatus: z.string().max(500),
+  releaseDate: z.string().max(120),
+  platforms: z.string().max(240),
+  discordUrl: z.string().max(500),
+  instagramUrl: z.string().max(500),
+  youtubeUrl: z.string().max(500),
+  contactEmail: z.string().max(320),
+  supportNote: z.string().max(1000),
+});
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      ctx.res.clearCookie("webdev_app_session", { maxAge: -1 });
+      return { success: true } as const;
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  content: router({
+    get: publicProcedure.query(() => getSiteData()),
+    submitSupport: publicProcedure
+      .input(z.object({
+        name: z.string().min(2).max(120),
+        email: z.string().email().max(320),
+        subject: z.string().min(2).max(180),
+        message: z.string().min(10).max(5000),
+      }))
+      .mutation(({ input }) => createSupportMessage(input).then(() => ({ success: true }))),
+  }),
+  admin: router({
+    data: adminProcedure.query(() => getAdminData()),
+    saveSettings: adminProcedure.input(settingsSchema).mutation(({ input }) => saveSettings(input).then(() => ({ success: true }))),
+    saveGallery: adminProcedure.input(mediaSchema).mutation(({ input }) => saveGalleryItem(input).then(() => ({ success: true }))),
+    deleteGallery: adminProcedure.input(z.object({ id: z.number() })).mutation(({ input }) => deleteGalleryItem(input.id).then(() => ({ success: true }))),
+    saveNews: adminProcedure.input(newsSchema).mutation(({ input }) => saveNewsItem(input).then(() => ({ success: true }))),
+    deleteNews: adminProcedure.input(z.object({ id: z.number() })).mutation(({ input }) => deleteNewsItem(input.id).then(() => ({ success: true }))),
+    saveProduct: adminProcedure.input(productSchema).mutation(({ input }) => saveProduct(input).then(() => ({ success: true }))),
+    deleteProduct: adminProcedure.input(z.object({ id: z.number() })).mutation(({ input }) => deleteProduct(input.id).then(() => ({ success: true }))),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
