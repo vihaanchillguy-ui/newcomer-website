@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   galleryItems,
@@ -7,6 +7,7 @@ import {
   products,
   siteContent,
   supportMessages,
+  announcementSubscribers,
   users,
 } from "../drizzle/schema";
 import {
@@ -148,18 +149,19 @@ export async function getSiteData(): Promise<SiteData> {
 export async function getAdminData() {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  const [settingsRows, gallery, news, productRows, messages] = await Promise.all([
+  const [settingsRows, gallery, news, productRows, messages, subscribers] = await Promise.all([
     db.select().from(siteContent),
     db.select().from(galleryItems).orderBy(asc(galleryItems.sortOrder)),
     db.select().from(newsItems).orderBy(desc(newsItems.createdAt)),
     db.select().from(products).orderBy(desc(products.createdAt)),
     db.select().from(supportMessages).orderBy(desc(supportMessages.createdAt)),
+    getAnnouncementSubscribers(),
   ]);
   const settings = { ...DEFAULT_SETTINGS };
   for (const row of settingsRows) {
     if (row.contentKey in settings) (settings as Record<string, string>)[row.contentKey] = row.value;
   }
-  return { settings, gallery, news, products: productRows, messages };
+  return { settings, gallery, news, products: productRows, messages, subscribers };
 }
 
 export async function saveSettings(settings: SiteSettings) {
@@ -238,4 +240,16 @@ export async function createSupportMessage(input: { name: string; email: string;
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.insert(supportMessages).values(input);
+}
+
+export async function subscribeToAnnouncements(email: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(announcementSubscribers).values({ email }).onDuplicateKeyUpdate({ set: { email } });
+}
+
+export async function getAnnouncementSubscribers() {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  return db.select().from(announcementSubscribers).orderBy(desc(announcementSubscribers.createdAt));
 }

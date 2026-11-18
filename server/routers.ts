@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, saveGalleryItem, saveNewsItem, saveProduct, saveSettings } from "./db";
+import { getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, subscribeToAnnouncements } from "./db";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
 
@@ -65,6 +65,9 @@ export const appRouter = router({
         message: z.string().min(10).max(5000),
       }))
       .mutation(({ input }) => createSupportMessage(input).then(() => ({ success: true }))),
+    subscribe: publicProcedure
+      .input(z.object({ email: z.string().email().max(320) }))
+      .mutation(({ input }) => subscribeToAnnouncements(input.email.toLowerCase()).then(() => ({ success: true }))),
   }),
   admin: router({
     data: adminProcedure.query(() => getAdminData()),

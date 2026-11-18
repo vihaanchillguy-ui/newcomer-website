@@ -66,9 +66,16 @@ export const supportMessages = mysqlTable("supportMessages", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const announcementSubscribers = mysqlTable("announcementSubscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type GalleryItem = typeof galleryItems.$inferSelect;
 export type NewsItem = typeof newsItems.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type SupportMessage = typeof supportMessages.$inferSelect;
+export type AnnouncementSubscriber = typeof announcementSubscribers.$inferSelect;
