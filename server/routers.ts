@@ -39,6 +39,7 @@ const settingsSchema = z.object({
   overview: z.string().max(2000),
   releaseStatus: z.string().max(500),
   releaseDate: z.string().max(120),
+  releaseDescription: z.string().max(2000),
   platforms: z.string().max(240),
   discordUrl: z.string().max(500),
   instagramUrl: z.string().max(500),

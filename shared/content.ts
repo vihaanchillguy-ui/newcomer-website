@@ -33,6 +33,7 @@ export type SiteSettings = {
   overview: string;
   releaseStatus: string;
   releaseDate: string;
+  releaseDescription: string;
   platforms: string;
   discordUrl: string;
   instagramUrl: string;
@@ -59,8 +60,10 @@ export const FALLBACK_ASSETS = {
 export const DEFAULT_SETTINGS: SiteSettings = {
   overview:
     "NEWCOMER is an upcoming realistic open-world game inspired by Melbourne, Australia. Official game details will be published here as development progresses.",
-  releaseStatus: "Release details have not been announced.",
-  releaseDate: "TBA",
+  releaseStatus: "Release planned for 31 Dec 2026.",
+  releaseDate: "31 Dec 2026",
+  releaseDescription:
+    "NEWCOMER is currently planned for release on 31 Dec 2026. More availability and platform information will be published here as it is confirmed.",
   platforms: "TBA",
   discordUrl: "",
   instagramUrl: "",
