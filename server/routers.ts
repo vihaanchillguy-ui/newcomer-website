@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, subscribeToAnnouncements } from "./db";
+import { getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, subscribeToAnnouncements } from "./db";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
+import { sendAnnouncementEmail, sendSubscriberWelcome } from "./email";
 
 const mediaSchema = z.object({
   id: z.number().optional(),
@@ -67,7 +68,12 @@ export const appRouter = router({
       .mutation(({ input }) => createSupportMessage(input).then(() => ({ success: true }))),
     subscribe: publicProcedure
       .input(z.object({ email: z.string().email().max(320) }))
-      .mutation(({ input }) => subscribeToAnnouncements(input.email.toLowerCase()).then(() => ({ success: true }))),
+      .mutation(async ({ input }) => {
+        const email = input.email.toLowerCase();
+        const created = await subscribeToAnnouncements(email);
+        const emailSent = created ? await sendSubscriberWelcome(email) : true;
+        return { success: true, emailSent };
+      }),
   }),
   admin: router({
     data: adminProcedure.query(() => getAdminData()),
@@ -78,6 +84,16 @@ export const appRouter = router({
     deleteNews: adminProcedure.input(z.object({ id: z.number() })).mutation(({ input }) => deleteNewsItem(input.id).then(() => ({ success: true }))),
     saveProduct: adminProcedure.input(productSchema).mutation(({ input }) => saveProduct(input).then(() => ({ success: true }))),
     deleteProduct: adminProcedure.input(z.object({ id: z.number() })).mutation(({ input }) => deleteProduct(input.id).then(() => ({ success: true }))),
+    broadcast: adminProcedure
+      .input(z.object({ subject: z.string().min(1).max(180), title: z.string().min(1).max(180), body: z.string().min(1).max(5000) }))
+      .mutation(async ({ input }) => {
+        const subscribers = await getAnnouncementSubscribers();
+        let sent = 0;
+        for (const subscriber of subscribers) {
+          if (await sendAnnouncementEmail({ ...input, email: subscriber.email })) sent += 1;
+        }
+        return { success: true, sent, total: subscribers.length };
+      }),
   }),
 });
 

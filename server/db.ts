@@ -245,7 +245,10 @@ export async function createSupportMessage(input: { name: string; email: string;
 export async function subscribeToAnnouncements(email: string) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+  const existing = await db.select({ id: announcementSubscribers.id }).from(announcementSubscribers).where(eq(announcementSubscribers.email, email)).limit(1);
+  if (existing.length) return false;
   await db.insert(announcementSubscribers).values({ email }).onDuplicateKeyUpdate({ set: { email } });
+  return true;
 }
 
 export async function getAnnouncementSubscribers() {
