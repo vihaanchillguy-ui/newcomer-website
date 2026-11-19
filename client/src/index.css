@@ -209,6 +209,7 @@ h2 { font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: -.065e
 .product-footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); padding-top: 15px; margin-top: 25px; font-size: 12px; }
 .product-footer strong { color: var(--orange); }
 .product-footer span { color: var(--muted); }
+.product-cta { align-self: flex-start; margin-top: 22px; }
 .social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-bottom: 95px; }
 .social-card { display: flex; align-items: center; gap: 17px; padding: 26px 22px; border: 1px solid var(--line); min-height: 125px; transition: border-color .2s ease, background .2s ease; }
 .social-card:hover, .social-card.available { border-color: rgba(240,93,35,.65); }
