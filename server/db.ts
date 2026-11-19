@@ -50,6 +50,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!db) throw new Error("Database is not available");
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
+  let matchingAdmin = false;
+  if (user.email) {
+    const existingAdmin = await db.select({ id: users.id }).from(users).where(and(eq(users.email, user.email), eq(users.role, "admin"))).limit(1);
+    matchingAdmin = existingAdmin.length > 0;
+  }
   const textFields = ["name", "email", "loginMethod"] as const;
   for (const field of textFields) {
     if (user[field] !== undefined) {
@@ -64,7 +69,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (user.role !== undefined) {
     values.role = user.role;
     updateSet.role = user.role;
-  } else if (user.openId === ENV.ownerOpenId) {
+  } else if (user.openId === ENV.ownerOpenId || matchingAdmin) {
     values.role = "admin";
     updateSet.role = "admin";
   }
