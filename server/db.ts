@@ -121,6 +121,7 @@ function toPublicProducts(rows: typeof products.$inferSelect[]): Product[] {
       currency: row.currency,
       platform: row.platform,
       availability: row.availability,
+      purchaseUrl: row.purchaseUrl,
       published: row.published === 1,
     }));
 }
@@ -232,6 +233,7 @@ export async function saveProduct(input: Product) {
     currency: input.currency,
     platform: input.platform,
     availability: input.availability,
+    purchaseUrl: input.purchaseUrl ?? "",
     published: input.published ? 1 : 0,
   } as const;
   if (input.id) await db.update(products).set(values).where(eq(products.id, input.id));

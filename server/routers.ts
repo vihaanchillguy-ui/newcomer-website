@@ -32,6 +32,7 @@ const productSchema = z.object({
   currency: z.string().max(8),
   platform: z.string().max(120),
   availability: z.string().max(120),
+  purchaseUrl: z.string().url().or(z.literal("")),
   published: z.boolean(),
 });
 

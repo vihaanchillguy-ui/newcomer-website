@@ -1,0 +1,1 @@
+ALTER TABLE `products` MODIFY COLUMN `purchaseUrl` varchar(500) NOT NULL DEFAULT '';

@@ -26,6 +26,7 @@ export type Product = {
   currency: string;
   platform: string;
   availability: string;
+  purchaseUrl: string;
   published: boolean;
 };
 

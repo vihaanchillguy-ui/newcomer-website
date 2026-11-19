@@ -51,6 +51,7 @@ export const products = mysqlTable("products", {
   currency: varchar("currency", { length: 8 }).notNull(),
   platform: varchar("platform", { length: 120 }).notNull(),
   availability: varchar("availability", { length: 120 }).notNull(),
+  purchaseUrl: varchar("purchaseUrl", { length: 500 }).notNull().default(""),
   published: int("published").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

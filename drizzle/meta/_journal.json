@@ -29,6 +29,20 @@
       "when": 1795043024842,
       "tag": "0003_abandoned_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1795070081327,
+      "tag": "0004_sleepy_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1795070368021,
+      "tag": "0005_eminent_archangel",
+      "breakpoints": true
     }
   ]
 }
