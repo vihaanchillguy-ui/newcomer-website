@@ -292,6 +292,15 @@ h2 { font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: -.065e
 .gate-card p { color: var(--muted); line-height: 1.6; margin: 0 0 12px; }
 .admin-loading { min-height: 100vh; display: grid; place-items: center; color: var(--orange); background: #090909; }
 .spin { animation: spin 1s linear infinite; }
+.admin-wheel-card { overflow: hidden; }
+.admin-wheel-visual-wrap { width: min(100%, 470px); aspect-ratio: 1; margin: 14px auto 30px; position: relative; display: grid; place-items: center; }
+.admin-wheel { width: 88%; aspect-ratio: 1; border-radius: 50%; position: relative; border: 8px solid #090909; box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 18px 45px rgba(0,0,0,.45); transition: transform 3.6s cubic-bezier(.12,.72,.15,1); overflow: hidden; }
+.admin-wheel::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(rgba(255,255,255,.28) 0deg 1deg, transparent 1deg 12deg); mix-blend-mode: overlay; pointer-events: none; }
+.admin-wheel-label { position: absolute; left: 50%; top: 50%; width: 43%; transform-origin: 0 0; color: #fff; font-size: clamp(8px, 1.2vw, 12px); font-weight: 700; letter-spacing: .04em; text-align: right; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,.9); z-index: 1; }
+.admin-wheel-pointer { position: absolute; z-index: 3; top: 0; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 28px solid #f2eee8; filter: drop-shadow(0 3px 4px rgba(0,0,0,.6)); }
+.admin-wheel-center { position: absolute; z-index: 4; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: 74px; height: 74px; border-radius: 50%; border: 5px solid #0c0c0c; background: #f2eee8; color: #111; display: grid; place-items: center; align-content: center; gap: 2px; font-size: 10px; font-weight: 800; letter-spacing: .12em; box-shadow: 0 2px 0 rgba(255,255,255,.3); }
+.admin-wheel-center:hover:not(:disabled) { background: #fff; transform: translate(-50%, -50%) scale(1.05); }
+.admin-wheel-center:disabled { cursor: not-allowed; opacity: .75; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.76); display: grid; place-items: center; padding: 20px; }
 .admin-modal { background: #121212; border: 1px solid rgba(255,255,255,.18); padding: 28px; width: min(650px, 100%); max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 90px rgba(0,0,0,.5); }
 .modal-head { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 20px; }
@@ -331,6 +340,8 @@ h2 { font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: -.065e
   .wheel-circle { width: min(78vw, 360px); }
   .wheel-rules, .wheel-admin-grid { grid-template-columns: 1fr; }
   .wheel-admin-grid > :first-child { grid-column: auto; }
+  .admin-wheel-visual-wrap { width: min(100%, 390px); }
+  .admin-wheel-label { font-size: 9px; }
   .product-art { min-height: 240px; }
   .social-grid { grid-template-columns: 1fr; padding-bottom: 65px; }
   .contact-grid { padding-bottom: 80px; }

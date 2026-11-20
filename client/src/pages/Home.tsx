@@ -298,12 +298,44 @@ type AdminWheelData = {
   winners: Array<{ id: number; winnerDate: string; displayName: string; prize: string; fulfilled: number; createdAt: Date }>;
 };
 
+function AdminWheelVisual({ entries, disabled, onSpin }: { entries: AdminWheelData["entries"]; disabled: boolean; onSpin: () => void }) {
+  const [rotation, setRotation] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const segmentAngle = entries.length ? 360 / entries.length : 360;
+  const spin = () => {
+    if (disabled || spinning || !entries.length) return;
+    const winnerIndex = Math.floor(Math.random() * entries.length);
+    const target = 360 - (winnerIndex * segmentAngle + segmentAngle / 2);
+    setSpinning(true);
+    setRotation(rotation + 360 * 6 + target);
+    window.setTimeout(() => {
+      setSpinning(false);
+      onSpin();
+    }, 3600);
+  };
+  const gradient = entries.length
+    ? `conic-gradient(${entries.map((_, index) => `${index % 2 ? "#242424" : "#e45b25"} ${index * segmentAngle}deg ${(index + 1) * segmentAngle}deg`).join(", ")})`
+    : "#1a1a1a";
+  return <div className="admin-wheel-visual-wrap">
+    <div className="admin-wheel-pointer" aria-hidden="true" />
+    <div className={`admin-wheel ${spinning ? "is-spinning" : ""}`} style={{ transform: `rotate(${rotation}deg)`, background: gradient }}>
+      {entries.map((entry, index) => {
+        const angle = index * segmentAngle + segmentAngle / 2;
+        return <span className="admin-wheel-label" key={entry.id} style={{ transform: `rotate(${angle}deg) translateY(-42%) rotate(90deg)` }} title={entry.displayName}>{entry.displayName.length > 16 ? `${entry.displayName.slice(0, 15)}…` : entry.displayName}</span>;
+      })}
+      <button className="admin-wheel-center" onClick={spin} disabled={disabled || spinning || !entries.length}>{spinning ? <Loader2 className="spin" size={18} /> : <><Sparkles size={16} /><span>SPIN</span></>}</button>
+    </div>
+  </div>;
+}
+
 function AdminWheelPanel({ wheel }: { wheel?: AdminWheelData }) {
   const utils = trpc.useUtils();
   const spin = trpc.admin.spinWheel.useMutation({ onSuccess: () => utils.admin.data.invalidate() });
   const markFulfilled = trpc.admin.markWinnerFulfilled.useMutation({ onSuccess: () => utils.admin.data.invalidate() });
   const todayWinner = wheel?.winners.find(winner => winner.winnerDate === wheel.today);
-  return <div className="wheel-admin-grid"><div className="admin-card"><div className="card-head"><div><span className="eyebrow">{wheel?.today ?? "Today"}</span><h2>Daily spin</h2></div><span className="status-pill">admin only</span></div><p className="admin-helper">Ten [NO WINNER] slots are added to every daily draw. Signed-in users can add one name per day, while the database enforces one spin per day.</p><div className="wheel-admin-stats"><div><span>Entries today</span><strong>{wheel?.entries.length ?? 0}</strong></div><div><span>Release date</span><strong>{wheel?.releaseDate ?? "31 Dec 2026"}</strong></div></div>{todayWinner ? <div className="winner-callout"><span className="eyebrow">{todayWinner.displayName === "[NO WINNER]" ? "Draw result" : "Today’s winner"}</span><strong>{todayWinner.displayName}</strong><span>{todayWinner.prize}</span></div> : <button className="button button-primary wheel-spin-button" disabled={spin.isPending || !wheel?.entries.length} onClick={() => spin.mutate()}>{spin.isPending ? <Loader2 className="spin" size={15} /> : <Sparkles size={15} />} Spin today’s wheel</button>}{spin.error && <p className="form-error">{spin.error.message}</p>}</div><div className="admin-card"><div className="card-head"><div><span className="eyebrow">Live entries</span><h2>{wheel?.entries.length ? "Names in today’s draw" : "No entries yet"}</h2></div></div>{wheel?.entries.length ? <div className="wheel-entry-list">{wheel.entries.map((entry, index) => <div className="wheel-entry-row" key={entry.id}><span>0{index + 1}</span><strong>{entry.displayName}</strong><small>{new Date(entry.createdAt).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}</small></div>)}</div> : <EmptyState icon={<Sparkles size={18} />} title="Waiting for entries." copy="Names appear here after signed-in users enter the daily wheel." />}</div><div className="admin-card wheel-winners-card"><div className="card-head"><div><span className="eyebrow">Prize fulfilment</span><h2>Winner history</h2></div></div>{wheel?.winners.length ? <div className="wheel-entry-list">{wheel.winners.map(winner => <div className="winner-history-row" key={winner.id}><div><strong>{winner.displayName}</strong><span>{winner.winnerDate} · {winner.prize}</span></div><button className={`status-pill ${winner.fulfilled ? "is-fulfilled" : ""}`} disabled={winner.displayName === "[NO WINNER]"} onClick={() => markFulfilled.mutate({ id: winner.id, fulfilled: !winner.fulfilled })}>{winner.fulfilled ? "Fulfilled" : "Mark fulfilled"}</button></div>)}</div> : <EmptyState title="No winners yet." copy="Completed daily spins will be recorded here." />}</div></div>;
+  const entries = wheel?.entries ?? [];
+  const handleSpin = () => spin.mutate();
+  return <div className="wheel-admin-grid"><div className="admin-card admin-wheel-card"><div className="card-head"><div><span className="eyebrow">{wheel?.today ?? "Today"}</span><h2>Daily spin</h2></div><span className="status-pill">admin only</span></div><p className="admin-helper">Every current entry is placed on the wheel, including [NO WINNER] slots. Spin once per day and the database records the official result.</p><AdminWheelVisual entries={entries} disabled={spin.isPending || Boolean(todayWinner)} onSpin={handleSpin} /><div className="wheel-admin-stats"><div><span>Entries on wheel</span><strong>{entries.length}</strong></div><div><span>Release date</span><strong>{wheel?.releaseDate ?? "31 Dec 2026"}</strong></div></div>{todayWinner && <div className="winner-callout"><span className="eyebrow">{todayWinner.displayName === "[NO WINNER]" ? "Draw result" : "Today’s winner"}</span><strong>{todayWinner.displayName}</strong><span>{todayWinner.prize}</span></div>}{spin.error && <p className="form-error">{spin.error.message}</p>}</div><div className="admin-card"><div className="card-head"><div><span className="eyebrow">Live entries</span><h2>{entries.length ? "Names in today’s draw" : "No entries yet"}</h2></div></div>{entries.length ? <div className="wheel-entry-list">{entries.map((entry, index) => <div className="wheel-entry-row" key={entry.id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{entry.displayName}</strong><small>{new Date(entry.createdAt).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}</small></div>)}</div> : <EmptyState icon={<Sparkles size={18} />} title="Waiting for entries." copy="Names appear here after signed-in users enter the daily wheel." />}</div><div className="admin-card wheel-winners-card"><div className="card-head"><div><span className="eyebrow">Prize fulfilment</span><h2>Winner history</h2></div></div>{wheel?.winners.length ? <div className="wheel-entry-list">{wheel.winners.map(winner => <div className="winner-history-row" key={winner.id}><div><strong>{winner.displayName}</strong><span>{winner.winnerDate} · {winner.prize}</span></div><button className={`status-pill ${winner.fulfilled ? "is-fulfilled" : ""}`} disabled={winner.displayName === "[NO WINNER]"} onClick={() => markFulfilled.mutate({ id: winner.id, fulfilled: !winner.fulfilled })}>{winner.fulfilled ? "Fulfilled" : "Mark fulfilled"}</button></div>)}</div> : <EmptyState title="No winners yet." copy="Completed daily spins will be recorded here." />}</div></div>;
 }
 
 function usePublicData() {
