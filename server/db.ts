@@ -323,7 +323,7 @@ export async function getAdminWheelData() {
   const today = melbourneDate();
   if (today <= RELEASE_DATE_ISO) await ensureNoWinnerEntries(db, today);
   const [entries, winners] = await Promise.all([
-    db.select().from(wheelEntries).where(eq(wheelEntries.entryDate, today)).orderBy(asc(wheelEntries.createdAt)),
+    db.select().from(wheelEntries).orderBy(asc(wheelEntries.createdAt)),
     db.select().from(wheelWinners).orderBy(desc(wheelWinners.createdAt)),
   ]);
   return { today, releaseDate: RELEASE_DATE_ISO, entries, winners };
@@ -337,7 +337,7 @@ export async function spinDailyWheel() {
   await ensureNoWinnerEntries(db, today);
   const existingWinner = await db.select().from(wheelWinners).where(eq(wheelWinners.winnerDate, today)).limit(1);
   if (existingWinner.length) throw new Error("Today’s wheel has already been spun.");
-  const entries = await db.select().from(wheelEntries).where(eq(wheelEntries.entryDate, today));
+  const entries = await db.select().from(wheelEntries).orderBy(asc(wheelEntries.createdAt));
   if (!entries.length) throw new Error("There are no eligible entries today.");
   const winner = entries[Math.floor(Math.random() * entries.length)];
   const noWinner = winner.displayName === NO_WINNER_LABEL;
