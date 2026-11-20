@@ -73,6 +73,14 @@ export const announcementSubscribers = mysqlTable("announcementSubscribers", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const accountRegistrations = mysqlTable("accountRegistrations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  phone: varchar("phone", { length: 40 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const wheelEntries = mysqlTable("wheelEntries", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

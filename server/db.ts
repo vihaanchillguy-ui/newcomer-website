@@ -8,6 +8,7 @@ import {
   siteContent,
   supportMessages,
   announcementSubscribers,
+  accountRegistrations,
   wheelEntries,
   wheelWinners,
   users,
@@ -264,6 +265,12 @@ export async function subscribeToAnnouncements(email: string) {
   if (existing.length) return false;
   await db.insert(announcementSubscribers).values({ email }).onDuplicateKeyUpdate({ set: { email } });
   return true;
+}
+
+export async function registerAccount(input: { name: string; email: string; phone?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(accountRegistrations).values({ name: input.name, email: input.email, phone: input.phone || null }).onDuplicateKeyUpdate({ set: { name: input.name, phone: input.phone || null } });
 }
 
 export async function getAnnouncementSubscribers() {

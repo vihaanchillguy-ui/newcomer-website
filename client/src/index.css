@@ -227,6 +227,15 @@ h2 { font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: -.065e
 .contact-aside p { color: var(--muted); line-height: 1.65; max-width: 380px; }
 .contact-email { display: inline-flex; align-items: center; gap: 9px; color: var(--orange); margin-top: 26px; font-size: 13px; }
 .support-form { border-top: 1px solid var(--line); padding-top: 6px; }
+.account-page { display: grid; grid-template-columns: minmax(0, 620px); justify-content: center; padding-bottom: 120px; }
+.account-card { border: 1px solid var(--line); background: #111; padding: clamp(24px, 5vw, 52px); }
+.account-form label, .account-form input { display: block; width: 100%; }
+.account-form label { color: var(--soft); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin: 20px 0; }
+.account-form label span { color: var(--muted); text-transform: none; letter-spacing: 0; }
+.account-form input { background: #131313; border: 1px solid var(--line); color: #fff; padding: 13px 14px; outline: none; margin-top: 9px; text-transform: none; letter-spacing: 0; font-size: 14px; }
+.account-form input:focus { border-color: var(--orange); }
+.account-form small { display: block; color: var(--muted); line-height: 1.5; margin-top: 18px; }
+.account-success { margin-top: 22px; }.account-success h2 { margin: 18px 0 8px; }.account-success p { color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
 .support-form label, .admin-card label, .admin-modal label { display: block; color: var(--soft); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin: 20px 0; }
 .support-form input, .support-form textarea, .admin-card input, .admin-card textarea, .admin-modal input, .admin-modal textarea, .admin-modal select { display: block; width: 100%; background: #131313; border: 1px solid var(--line); color: #fff; padding: 13px 14px; outline: none; margin-top: 9px; resize: vertical; text-transform: none; letter-spacing: 0; font-size: 14px; }
 .support-form input:focus, .support-form textarea:focus, .admin-card input:focus, .admin-card textarea:focus, .admin-modal input:focus, .admin-modal textarea:focus, .admin-modal select:focus { border-color: var(--orange); }

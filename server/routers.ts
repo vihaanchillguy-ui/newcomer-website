@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createWheelEntry, getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
+import { createWheelEntry, getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, registerAccount, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
 import { sendAnnouncementEmail, sendSubscriberWelcome } from "./email";
@@ -59,7 +59,8 @@ export const appRouter = router({
     }),
   }),
   content: router({
-    get: publicProcedure.query(() => getSiteData()),
+    site: publicProcedure.query(() => getSiteData()),
+    registerAccount: publicProcedure.input(z.object({ name: z.string().trim().min(2).max(160), email: z.string().trim().email().max(320), phone: z.string().trim().max(40).optional() })).mutation(({ input }) => registerAccount(input).then(() => ({ success: true }))),
     submitSupport: publicProcedure
       .input(z.object({
         name: z.string().min(2).max(120),
