@@ -229,6 +229,7 @@ h2 { font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: -.065e
 .support-form { border-top: 1px solid var(--line); padding-top: 6px; }
 .account-page { display: grid; grid-template-columns: minmax(0, 620px); justify-content: center; padding-bottom: 120px; }
 .account-card { border: 1px solid var(--line); background: #111; padding: clamp(24px, 5vw, 52px); }
+.account-switch { display: flex; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 28px; }.account-switch button { border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 10px 14px; cursor: pointer; text-transform: uppercase; font-size: 10px; letter-spacing: .1em; }.account-switch button.active { background: var(--orange); border-color: var(--orange); color: #111; }
 .account-form label, .account-form input { display: block; width: 100%; }
 .account-form label { color: var(--soft); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin: 20px 0; }
 .account-form label span { color: var(--muted); text-transform: none; letter-spacing: 0; }
@@ -236,6 +237,7 @@ h2 { font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: -.065e
 .account-form input:focus { border-color: var(--orange); }
 .account-form small { display: block; color: var(--muted); line-height: 1.5; margin-top: 18px; }
 .account-success { margin-top: 22px; }.account-success h2 { margin: 18px 0 8px; }.account-success p { color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+.account-divider { display: flex; align-items: center; gap: 12px; color: var(--muted); margin: 24px 0 16px; }.account-divider::before, .account-divider::after { content: ""; height: 1px; background: var(--line); flex: 1; }.account-hint { display: block; color: var(--muted); line-height: 1.5; margin-top: 14px; }
 .support-form label, .admin-card label, .admin-modal label { display: block; color: var(--soft); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin: 20px 0; }
 .support-form input, .support-form textarea, .admin-card input, .admin-card textarea, .admin-modal input, .admin-modal textarea, .admin-modal select { display: block; width: 100%; background: #131313; border: 1px solid var(--line); color: #fff; padding: 13px 14px; outline: none; margin-top: 9px; resize: vertical; text-transform: none; letter-spacing: 0; font-size: 14px; }
 .support-form input:focus, .support-form textarea:focus, .admin-card input:focus, .admin-card textarea:focus, .admin-modal input:focus, .admin-modal textarea:focus, .admin-modal select:focus { border-color: var(--orange); }

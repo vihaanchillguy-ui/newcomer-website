@@ -78,6 +78,10 @@ export const accountRegistrations = mysqlTable("accountRegistrations", {
   name: varchar("name", { length: 160 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   phone: varchar("phone", { length: 40 }),
+  passwordHash: text("passwordHash"),
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  sessionTokenHash: varchar("sessionTokenHash", { length: 128 }),
+  sessionExpiresAt: timestamp("sessionExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

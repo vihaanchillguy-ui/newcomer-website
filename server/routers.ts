@@ -1,8 +1,10 @@
 import { z } from "zod";
-import { createWheelEntry, getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, registerAccount, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
+import { TRPCError } from "@trpc/server";
+import { createWheelEntry, getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
 import { sendAnnouncementEmail, sendSubscriberWelcome } from "./email";
+import { loginLocalAccount, logoutLocalAccount, registerLocalAccount } from "./local-auth";
 
 const mediaSchema = z.object({
   id: z.number().optional(),
@@ -58,9 +60,17 @@ export const appRouter = router({
       return { success: true } as const;
     }),
   }),
+  account: router({
+    login: publicProcedure.input(z.object({ email: z.string().trim().email().max(320), password: z.string().min(8).max(128) })).mutation(async ({ ctx, input }) => {
+      const user = await loginLocalAccount(input.email, input.password, ctx.res);
+      if (!user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect." });
+      return user;
+    }),
+    logout: publicProcedure.mutation(({ ctx }) => logoutLocalAccount(ctx.req, ctx.res).then(() => ({ success: true }))),
+  }),
   content: router({
     site: publicProcedure.query(() => getSiteData()),
-    registerAccount: publicProcedure.input(z.object({ name: z.string().trim().min(2).max(160), email: z.string().trim().email().max(320), phone: z.string().trim().max(40).optional() })).mutation(({ input }) => registerAccount(input).then(() => ({ success: true }))),
+    registerAccount: publicProcedure.input(z.object({ name: z.string().trim().min(2).max(160), email: z.string().trim().email().max(320), phone: z.string().trim().max(40).optional(), password: z.string().min(8).max(128) })).mutation(({ ctx, input }) => registerLocalAccount(input, ctx.res, ctx.user?.role === "admin")),
     submitSupport: publicProcedure
       .input(z.object({
         name: z.string().min(2).max(120),

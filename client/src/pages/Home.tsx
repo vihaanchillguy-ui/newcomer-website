@@ -41,6 +41,7 @@ function Logo({ light = false }: { light?: boolean }) {
 
 function SiteHeader({ active }: { active?: string }) {
   const [open, setOpen] = useState(false);
+  const { data: authUser } = trpc.auth.me.useQuery();
   const links = [
     ["Overview", "/overview"],
     ["Gallery", "/gallery"],
@@ -58,6 +59,7 @@ function SiteHeader({ active }: { active?: string }) {
           {links.map(([label, href]) => (
             <Link key={href} href={href} className={active === href ? "active" : ""} onClick={() => setOpen(false)}>{label}</Link>
           ))}
+          {authUser?.role === "admin" && <Link href="/admin" className={active === "/admin" ? "active" : ""} onClick={() => setOpen(false)}>Admin</Link>}
           <Link href="/contact" className={`nav-cta ${active === "/contact" ? "active" : ""}`} onClick={() => setOpen(false)}>Contact <ArrowUpRight /></Link>
         </nav>
         <button className="icon-button menu-toggle" onClick={() => setOpen(!open)} aria-label="Toggle navigation">
@@ -190,13 +192,19 @@ function ProductCard({ product }: { product: Product }) {
 
 function AccountPage() {
   const register = trpc.content.registerAccount.useMutation();
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const login = trpc.account.login.useMutation();
+  const utils = trpc.useUtils();
+  const { data: currentUser } = trpc.auth.me.useQuery();
+  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [saved, setSaved] = useState(false);
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    register.mutate(form, { onSuccess: () => setSaved(true) });
+    if (mode === "signup") register.mutate(form, { onSuccess: () => { setSaved(true); utils.auth.me.invalidate(); } });
+    else login.mutate({ email: form.email, password: form.password }, { onSuccess: () => { setSaved(true); utils.auth.me.invalidate(); } });
   };
-  return <><SiteHeader active="/account" /><main><PageIntro eyebrow="Account / Wheel access" title="Make your entry." copy="Create your NEWCOMER account details, then sign in to enter the daily wheel. Phone is optional." /><section className="container account-page"><div className="account-card"><span className="eyebrow">Account details</span>{saved ? <div className="account-success"><div className="signup-success"><Check size={16} /> Details saved.</div><h2>Now sign in to enter.</h2><p>Use the same email with your authorized sign-in. Then add your name once per day on the wheel.</p><button className="button button-primary" onClick={startLogin}>Sign in / continue <ArrowRight size={16} /></button></div> : <form className="account-form" onSubmit={onSubmit}><label>Name<input required minLength={2} maxLength={160} value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} placeholder="Your name" /></label><label>Email<input required type="email" maxLength={320} value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="you@example.com" /></label><label>Phone number <span>(optional)</span><input type="tel" maxLength={40} value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value })} placeholder="+61 ..." /></label><button className="button button-primary" type="submit" disabled={register.isPending}>{register.isPending ? <Loader2 className="spin" size={15} /> : <ShieldCheck size={15} />} Save details and continue</button>{register.error && <p className="form-error">{register.error.message}</p>}<small>This form saves your contact details. Sign in is still required before entering the daily wheel.</small></form>}</div></section></main><Footer settings={DEFAULT_SETTINGS} /></>;
+  const pending = register.isPending || login.isPending;
+  return <><SiteHeader active="/account" /><main><PageIntro eyebrow="Account / Wheel access" title={mode === "signup" ? "Create your account." : "Sign in to NEWCOMER."} copy={mode === "signup" ? "Create an account with a password, then use it to enter the daily wheel. Phone is optional." : "Sign in with your NEWCOMER email and password. Admin accounts will see the ADMIN tab."} /><section className="container account-page"><div className="account-card"><div className="account-switch"><button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setSaved(false); }}>Create account</button><button className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setSaved(false); }}>Sign in</button></div>{saved ? <div className="account-success"><div className="signup-success"><Check size={16} /> {mode === "signup" ? "Account created." : "Signed in."}</div><h2>{currentUser?.role === "admin" ? "Admin access ready." : "You’re signed in."}</h2><p>{currentUser?.role === "admin" ? "The ADMIN tab is now visible in the website navigation." : "You can now enter your name once per day on the wheel."}</p>{currentUser?.role === "admin" ? <Link className="button button-primary" href="/admin">Open admin panel <ArrowRight size={16} /></Link> : <Link className="button button-primary" href="/wheel">Enter today’s wheel <ArrowRight size={16} /></Link>}</div> : <><form className="account-form" onSubmit={onSubmit}>{mode === "signup" && <label>Name<input required minLength={2} maxLength={160} value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} placeholder="Your name" /></label>}<label>Email<input required type="email" maxLength={320} value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="you@example.com" /></label>{mode === "signup" && <label>Phone number <span>(optional)</span><input type="tel" maxLength={40} value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value })} placeholder="+61 ..." /></label>}<label>Password<input required type="password" minLength={8} maxLength={128} value={form.password} onChange={event => setForm({ ...form, password: event.target.value })} placeholder="At least 8 characters" /></label><button className="button button-primary" type="submit" disabled={pending}>{pending ? <Loader2 className="spin" size={15} /> : <ShieldCheck size={15} />} {mode === "signup" ? "Create account" : "Sign in"}</button>{(register.error || login.error) && <p className="form-error">{register.error?.message || login.error?.message}</p>}<small>Your password is stored securely. Admin access is shown only after the server confirms the account role.</small></form><div className="account-divider"><span>or</span></div><button className="button button-outline" onClick={startLogin}>Use Manus sign in <ArrowRight size={15} /></button><small className="account-hint">Existing admin account? Sign in with Manus first, then create your password account to link admin access securely.</small></>}</div></section></main><Footer settings={DEFAULT_SETTINGS} /></>;
 }
 
 function WheelPage() {

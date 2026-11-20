@@ -50,6 +50,13 @@
       "when": 1795085916266,
       "tag": "0006_cuddly_captain_britain",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1795161257314,
+      "tag": "0007_brave_chameleon",
+      "breakpoints": true
     }
   ]
 }
