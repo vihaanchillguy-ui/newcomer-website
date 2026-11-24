@@ -24,7 +24,7 @@ import {
   X,
   Youtube,
 } from "lucide-react";
-import { FALLBACK_ASSETS, DEFAULT_SETTINGS, type MediaItem, type NewsItem, type Product, type SiteSettings } from "@shared/content";
+import { FALLBACK_ASSETS, DEFAULT_SETTINGS, DEFAULT_SITE_DATA, type MediaItem, type NewsItem, type Product, type SiteSettings } from "@shared/content";
 import { startLogin } from "../const";
 import { trpc } from "../lib/trpc";
 
@@ -376,7 +376,7 @@ function AdminWheelPanel({ wheel }: { wheel?: AdminWheelData }) {
 
 function usePublicData() {
   const query = trpc.content.site.useQuery();
-  return query.data ?? { settings: DEFAULT_SETTINGS, gallery: [], news: [], products: [] };
+  return query.data ?? DEFAULT_SITE_DATA;
 }
 
 export default function Home() {
