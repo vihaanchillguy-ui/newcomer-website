@@ -85,6 +85,17 @@ export const accountRegistrations = mysqlTable("accountRegistrations", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const playerProfiles = mysqlTable("playerProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  handle: varchar("handle", { length: 40 }).notNull().default(""),
+  bio: text("bio").notNull().default(""),
+  favoriteArea: varchar("favoriteArea", { length: 120 }).notNull().default(""),
+  notifications: int("notifications").notNull().default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const wheelEntries = mysqlTable("wheelEntries", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
@@ -115,3 +126,4 @@ export type SupportMessage = typeof supportMessages.$inferSelect;
 export type AnnouncementSubscriber = typeof announcementSubscribers.$inferSelect;
 export type WheelEntry = typeof wheelEntries.$inferSelect;
 export type WheelWinner = typeof wheelWinners.$inferSelect;
+export type PlayerProfile = typeof playerProfiles.$inferSelect;

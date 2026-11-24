@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createWheelEntry, getAdminData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, saveGalleryItem, saveNewsItem, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
+import { createWheelEntry, getAdminData, getPlayerHubData, getSiteData, createSupportMessage, deleteGalleryItem, deleteNewsItem, deleteProduct, getAnnouncementSubscribers, getWheelState, markWheelWinnerFulfilled, saveGalleryItem, saveNewsItem, savePlayerProfile, saveProduct, saveSettings, spinDailyWheel, subscribeToAnnouncements } from "./db";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
 import { sendAnnouncementEmail, sendSubscriberWelcome } from "./email";
@@ -61,6 +61,8 @@ export const appRouter = router({
     }),
   }),
   account: router({
+    profile: protectedProcedure.query(({ ctx }) => getPlayerHubData(ctx.user.id, ctx.user.email ?? "")),
+    updateProfile: protectedProcedure.input(z.object({ handle: z.string().trim().max(40), bio: z.string().trim().max(240), favoriteArea: z.string().trim().max(120), notifications: z.boolean() })).mutation(({ ctx, input }) => savePlayerProfile(ctx.user.email ?? `user-${ctx.user.id}@local.invalid`, input)),
     login: publicProcedure.input(z.object({ email: z.string().trim().email().max(320), password: z.string().min(8).max(128) })).mutation(async ({ ctx, input }) => {
       const user = await loginLocalAccount(input.email, input.password, ctx.res);
       if (!user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect." });

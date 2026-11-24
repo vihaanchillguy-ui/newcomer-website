@@ -9,6 +9,7 @@ import {
   supportMessages,
   announcementSubscribers,
   accountRegistrations,
+  playerProfiles,
   wheelEntries,
   wheelWinners,
   users,
@@ -271,6 +272,26 @@ export async function registerAccount(input: { name: string; email: string; phon
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.insert(accountRegistrations).values({ name: input.name, email: input.email, phone: input.phone || null }).onDuplicateKeyUpdate({ set: { name: input.name, phone: input.phone || null } });
+}
+
+export async function getPlayerHubData(userId: number, email: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.email, email.toLowerCase())).limit(1);
+  const [entries, wins] = await Promise.all([
+    db.select().from(wheelEntries).where(eq(wheelEntries.userId, userId)).orderBy(desc(wheelEntries.createdAt)),
+    db.select().from(wheelWinners).where(eq(wheelWinners.userId, userId)).orderBy(desc(wheelWinners.createdAt)),
+  ]);
+  return { profile: profile ?? null, entries, wins };
+}
+
+export async function savePlayerProfile(email: string, input: { handle: string; bio: string; favoriteArea: string; notifications: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const normalizedEmail = email.toLowerCase();
+  await db.insert(playerProfiles).values({ email: normalizedEmail, handle: input.handle, bio: input.bio, favoriteArea: input.favoriteArea, notifications: input.notifications ? 1 : 0 }).onDuplicateKeyUpdate({ set: { handle: input.handle, bio: input.bio, favoriteArea: input.favoriteArea, notifications: input.notifications ? 1 : 0 } });
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.email, normalizedEmail)).limit(1);
+  return profile;
 }
 
 export async function getAnnouncementSubscribers() {

@@ -18,6 +18,9 @@ function Router() {
       <Route path="/store" component={Home} />
       <Route path="/preorder" component={Home} />
       <Route path="/account" component={Home} />
+      <Route path="/player" component={Home} />
+      <Route path="/game-info" component={Home} />
+      <Route path="/development" component={Home} />
       <Route path="/wheel" component={Home} />
       <Route path="/community" component={Home} />
       <Route path="/contact" component={Home} />
